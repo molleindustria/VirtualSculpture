@@ -35,7 +35,9 @@ public class Morpher : MonoBehaviour
         EasingFunction.Function f = EasingFunction.GetEasingFunction(easing);
 
         float easedValue = f(0, 1, tNormalized);
-        
+
+        blendNumber = Mathf.Clamp(blendNumber, 0, skinnedMeshRenderer.sharedMesh.blendShapeCount-1);
+
         float blendWeight = easedValue * 100;
         skinnedMeshRenderer.SetBlendShapeWeight(blendNumber, blendWeight);
     }
