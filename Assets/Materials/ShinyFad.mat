@@ -77,7 +77,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
-    - _ColorSize: 0.63
+    - _ColorSize: 0
     - _ColorStart: 0
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
@@ -97,7 +97,7 @@ Material:
     - _NoiseTextureOffset: 0
     - _Normal: 0
     - _OcclusionStrength: 1
-    - _OutlineAmount: 0.63
+    - _OutlineAmount: 0.08
     - _PainterlyLight: 1
     - _Parallax: 0.02
     - _ShadowColorMultiplier: 3.38

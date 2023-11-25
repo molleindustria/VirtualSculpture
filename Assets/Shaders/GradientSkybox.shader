@@ -1,6 +1,6 @@
 ﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
-Shader "GradientSky"
+Shader "Skybox/Gradient Skybox"
 {
     Properties
     {
@@ -67,5 +67,5 @@ Shader "GradientSky"
             ENDCG
         }
     }
-    //CustomEditor "GradientSkyboxInspector"
+    CustomEditor "GradientSkyboxInspector"
 }
