@@ -4,10 +4,12 @@
 // Implements correct triplanar normals in a Surface Shader with out computing or passing additional information from the
 // vertex shader.
 
-Shader "StandardTriplanar" {
+Shader "TriplanarRelative" {
 	Properties{
 		_Color("Color", Color) = (1,1,1,1)
-		_MainTex("Albedo (RGB)", 2D) = "white" {}
+		[NoScaleOffset] _MainTex("Albedo (RGB)", 2D) = "white" {}
+		_TexScale("Texture scale", Float) = 1
+
 		[NoScaleOffset] _BumpMap("Normal Map", 2D) = "bump" {}
 		_Glossiness("Smoothness", Range(0, 1)) = 0.5
 		[Gamma] _Metallic("Metallic", Range(0, 1)) = 0
@@ -47,6 +49,7 @@ Shader "StandardTriplanar" {
 			sampler2D _MainTex;
 			float4 _MainTex_ST;
 			float4 _Color;
+			float _TexScale;
 
 			sampler2D _BumpMap;
 			sampler2D _OcclusionMap;
@@ -74,15 +77,50 @@ Shader "StandardTriplanar" {
 				// work around bug where IN.worldNormal is always (0,0,0)!
 				IN.worldNormal = WorldNormalVector(IN, float3(0,0,1));
 
+				// get translation from matrix
+				float3 pos = unity_WorldToObject._m03_m13_m23;
+
+				// get unscaled rotation from matrix
+				float3x3 rot = float3x3(
+					normalize(unity_WorldToObject._m00_m01_m02),
+					normalize(unity_WorldToObject._m10_m11_m12),
+					normalize(unity_WorldToObject._m20_m21_m22)
+					);
+				// make box mapping with rotation preserved
+				float3 map = mul(rot, IN.worldPos) + pos;
+				float3 norm = mul(rot, IN.worldNormal);
+
+				float3 blend = abs(norm) / dot(abs(norm), float3(1, 1, 1));
+				//float2 uv;
+
+
+				/*
+				if (blend.x > max(blend.y, blend.z)) {
+					uv = map.yz;
+				}
+				else if (blend.z > blend.y) {
+					uv = map.xy;
+				}
+				else {
+					uv = map.xz;
+				}
+				*/
+
+
+
 				// calculate triplanar blend
-				half3 triblend = saturate(pow(IN.worldNormal, 4));
+				half3 triblend = saturate(pow(norm, 4));
 				triblend /= max(dot(triblend, half3(1,1,1)), 0.0001);
 
+				half3 axisSign = IN.worldNormal < 0 ? -1 : 1;
+
+
+				
 				// calculate triplanar uvs
 				// applying texture scale and offset values ala TRANSFORM_TEX macro
-				float2 uvX = IN.worldPos.zy * _MainTex_ST.xy + _MainTex_ST.zy;
-				float2 uvY = IN.worldPos.xz * _MainTex_ST.xy + _MainTex_ST.zy;
-				float2 uvZ = IN.worldPos.xy * _MainTex_ST.xy + _MainTex_ST.zy;
+				float2 uvX = map.zy * (1 / _TexScale);
+				float2 uvY = map.xz * (1 / _TexScale);
+				float2 uvZ = map.xy * (1 / _TexScale);
 
 				// offset UVs to prevent obvious mirroring
 			#if defined(TRIPLANAR_UV_OFFSET)
@@ -91,7 +129,7 @@ Shader "StandardTriplanar" {
 			#endif
 
 				// minor optimization of sign(). prevents return value of 0
-				half3 axisSign = IN.worldNormal < 0 ? -1 : 1;
+				//half3 axisSign = IN.worldNormal < 0 ? -1 : 1;
 
 				// flip UVs horizontally to correct for back side projection
 			#if defined(TRIPLANAR_CORRECT_PROJECTED_U)
@@ -99,7 +137,10 @@ Shader "StandardTriplanar" {
 				uvY.x *= axisSign.y;
 				uvZ.x *= -axisSign.z;
 			#endif
+			
+				//fixed4 c = tex2D(_MainTex, uv * (1 / _TexScale));
 
+				//uv = uv * (1 / _TexScale);
 				
 				// albedo textures
 				fixed4 colX = tex2D(_MainTex, uvX) * _Color.rgba;
